@@ -1,7 +1,12 @@
 import { html, nothing, type TemplateResult } from "lit";
 import { ref } from "lit/directives/ref.js";
 import { repeat } from "lit/directives/repeat.js";
-import type { CompactionStatus, FallbackStatus } from "../app-tool-stream.ts";
+import { unsafeHTML } from "lit/directives/unsafe-html.js";
+import type {
+  CompactionStatus,
+  FallbackStatus,
+  SubagentBlockingStatus,
+} from "../app-tool-stream.ts";
 import type { PlanApprovalRequest } from "../app-tool-stream.ts";
 import {
   CHAT_ATTACHMENT_ACCEPT,
@@ -70,6 +75,9 @@ export type ChatProps = {
   canAbort?: boolean;
   compactionStatus?: CompactionStatus | null;
   fallbackStatus?: FallbackStatus | null;
+  /** Live-test iteration 1 Bug 3: bottom-toast for "subagents still running"
+   * when user clicks Approve while subagents are mid-flight. */
+  subagentBlockingStatus?: SubagentBlockingStatus | null;
   messages: unknown[];
   sideResult?: ChatSideResult | null;
   toolMessages: unknown[];
@@ -477,6 +485,42 @@ function renderCompactionIndicator(status: CompactionStatus | null | undefined) 
     }
   }
   return nothing;
+}
+
+/**
+ * Live-test iteration 1 Bug 3: bottom-of-chat toast that fires when
+ * the user clicks Approve on a plan while the parent agent run still
+ * has open subagents. Mirrors the model-fallback toast pattern (CSS
+ * class `compaction-indicator--fallback`, 8s auto-dismiss, polite
+ * aria-live) so the user sees it in the same region as the fallback
+ * toast they already recognize.
+ */
+function renderSubagentBlockingIndicator(status: SubagentBlockingStatus | null | undefined) {
+  if (!status) {
+    return nothing;
+  }
+  const elapsed = Date.now() - status.occurredAt;
+  if (elapsed >= FALLBACK_TOAST_DURATION_MS) {
+    return nothing;
+  }
+  const tooltip =
+    status.openSubagentRunIds.length > 0
+      ? `Open subagents: ${status.openSubagentRunIds.slice(0, 5).join(", ")}${
+          status.openSubagentRunIds.length > 5
+            ? ` and ${status.openSubagentRunIds.length - 5} more`
+            : ""
+        }`
+      : status.message;
+  return html`
+    <div
+      class="compaction-indicator compaction-indicator--fallback"
+      role="status"
+      aria-live="polite"
+      title=${tooltip}
+    >
+      ${icons.brain} ${status.message}
+    </div>
+  `;
 }
 
 function renderFallbackIndicator(status: FallbackStatus | null | undefined) {
@@ -1452,6 +1496,7 @@ export function renderChat(props: ChatProps) {
         : nothing}
       ${renderSideResult(props.sideResult, props.onDismissSideResult)}
       ${renderFallbackIndicator(props.fallbackStatus)}
+      ${renderSubagentBlockingIndicator(props.subagentBlockingStatus)}
       ${renderCompactionIndicator(props.compactionStatus)}
       ${renderContextNotice(activeSession, props.sessions?.defaults?.contextTokens ?? null)}
       ${props.showNewMessages
