@@ -1791,7 +1791,7 @@ export async function runEmbeddedPiAgent(
                   source: "planning_only_retry",
                 },
               });
-              void params.onAgentEvent?.({
+              params.onAgentEvent?.({
                 stream: "plan",
                 data: {
                   phase: "update",
