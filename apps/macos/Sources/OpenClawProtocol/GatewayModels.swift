@@ -11,6 +11,7 @@ public enum ErrorCode: String, Codable, Sendable {
     case invalidRequest = "INVALID_REQUEST"
     case approvalNotFound = "APPROVAL_NOT_FOUND"
     case unavailable = "UNAVAILABLE"
+    case planApprovalBlockedBySubagents = "PLAN_APPROVAL_BLOCKED_BY_SUBAGENTS"
 }
 
 public struct ConnectParams: Codable, Sendable {
@@ -1759,6 +1760,9 @@ public struct SessionsPatchParams: Codable, Sendable {
     public let subagentcontrolscope: AnyCodable?
     public let sendpolicy: AnyCodable?
     public let groupactivation: AnyCodable?
+    public let planmode: AnyCodable?
+    public let planapproval: AnyCodable?
+    public let lastplansteps: [[String: AnyCodable]]?
 
     public init(
         key: String,
@@ -1781,7 +1785,10 @@ public struct SessionsPatchParams: Codable, Sendable {
         subagentrole: AnyCodable?,
         subagentcontrolscope: AnyCodable?,
         sendpolicy: AnyCodable?,
-        groupactivation: AnyCodable?)
+        groupactivation: AnyCodable?,
+        planmode: AnyCodable?,
+        planapproval: AnyCodable?,
+        lastplansteps: [[String: AnyCodable]]?)
     {
         self.key = key
         self.label = label
@@ -1804,6 +1811,9 @@ public struct SessionsPatchParams: Codable, Sendable {
         self.subagentcontrolscope = subagentcontrolscope
         self.sendpolicy = sendpolicy
         self.groupactivation = groupactivation
+        self.planmode = planmode
+        self.planapproval = planapproval
+        self.lastplansteps = lastplansteps
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -1828,6 +1838,9 @@ public struct SessionsPatchParams: Codable, Sendable {
         case subagentcontrolscope = "subagentControlScope"
         case sendpolicy = "sendPolicy"
         case groupactivation = "groupActivation"
+        case planmode = "planMode"
+        case planapproval = "planApproval"
+        case lastplansteps = "lastPlanSteps"
     }
 }
 
